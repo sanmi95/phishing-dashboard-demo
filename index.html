@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phishing Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* M&M Mars palette */
+:root {
+  --red:     #d62b2b;
+  --yellow:  #f5c400;
+  --blue:    #1a4fa0;
+  --green:   #2e8b3a;
+  --orange:  #e8671a;
+  --brown:   #6b3a2a;
+  --bg:      #faf8f5;
+  --surface: #ffffff;
+  --border:  #e8e3da;
+  --ink:     #1a1a2e;
+  --muted:   #7a7068;
+  --stripe:  #fff9e6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* ── Candy stripe top bar ── */
+.candy-bar{height:5px;background:repeating-linear-gradient(90deg,var(--red) 0px,var(--red) 40px,var(--yellow) 40px,var(--yellow) 80px,var(--blue) 80px,var(--blue) 120px,var(--green) 120px,var(--green) 160px,var(--orange) 160px,var(--orange) 200px,var(--brown) 200px,var(--brown) 240px)}
+
+/* ── Header ── */
+.hdr{background:var(--surface);border-bottom:2px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 36px}
+.hdr-logo{display:flex;align-items:center;gap:14px}
+.hdr-mark{width:38px;height:38px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;color:#fff;letter-spacing:-.5px;box-shadow:0 2px 8px rgba(214,43,43,.3)}
+.hdr-title{font-size:18px;font-weight:900;color:var(--ink);letter-spacing:-.3px}
+.hdr-sub{font-family:'Fira Code',monospace;font-size:10px;color:var(--muted);margin-top:1px}
+
+.btn{font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;padding:9px 20px;border-radius:24px;cursor:pointer;border:none;transition:all .18s;letter-spacing:.01em}
+.btn-primary{background:var(--red);color:#fff;box-shadow:0 2px 8px rgba(214,43,43,.3)}
+.btn-primary:hover{background:#b82222;transform:translateY(-1px);box-shadow:0 4px 14px rgba(214,43,43,.35)}
+.btn-ghost{background:transparent;color:var(--muted);border:2px solid var(--border)}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+.btn-del{background:transparent;color:var(--red);border:1.5px solid rgba(214,43,43,.3);font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;padding:5px 13px;border-radius:20px;cursor:pointer;transition:all .18s}
+.btn-del:hover{background:rgba(214,43,43,.08);border-color:var(--red)}
+.btn-sm{padding:7px 16px;font-size:12px}
+
+.nav{display:flex;gap:4px;background:var(--bg);border-radius:24px;padding:3px;border:2px solid var(--border)}
+.nav-tab{font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;padding:7px 18px;border-radius:20px;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .18s}
+.nav-tab.active{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(26,79,160,.25)}
+.nav-tab:hover:not(.active){color:var(--ink)}
+
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(26,26,46,.6);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:20px;padding:40px;width:500px;max-width:94vw;box-shadow:0 32px 80px rgba(0,0,0,.2);animation:mIn .22s ease;border-top:5px solid var(--yellow)}
+@keyframes mIn{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.modal h2{font-size:22px;font-weight:900;margin-bottom:6px;color:var(--ink)}
+.modal-desc{font-size:13px;color:var(--muted);margin-bottom:26px;line-height:1.6}
+.flabel{display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:7px}
+.finput{width:100%;background:var(--bg);border:2px solid var(--border);color:var(--ink);padding:11px 14px;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;outline:none;transition:border-color .18s;margin-bottom:18px}
+.finput:focus{border-color:var(--blue)}
+.finput::placeholder{color:var(--muted);font-weight:400}
+.drop{border:2px dashed var(--border);border-radius:16px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.drop:hover,.drop.over{border-color:var(--yellow);background:#fffcf0}
+.drop-ico{font-size:32px;margin-bottom:10px}
+.drop p{font-size:13px;color:var(--muted);font-weight:600}
+.drop strong{color:var(--blue);cursor:pointer}
+.drop-name{margin-top:8px;color:var(--green);font-weight:800;font-size:12px}
+.modal-row{display:flex;gap:10px;justify-content:flex-end;margin-top:26px}
+.btn-cancel{background:transparent;border:2px solid var(--border);color:var(--muted);padding:9px 20px;border-radius:24px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .18s}
+.btn-cancel:hover{border-color:var(--ink);color:var(--ink)}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--ink);color:#fff;padding:13px 22px;border-radius:24px;font-size:13px;font-weight:800;z-index:999;transform:translateY(60px);opacity:0;transition:all .28s}
+.toast.show{transform:none;opacity:1}
+.toast.ok{border-left:4px solid var(--green)}
+.toast.err{border-left:4px solid var(--red)}
+
+/* ── Layout ── */
+.main{padding:32px 36px;max-width:1400px;margin:0 auto}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:90px 40px}
+.empty-ico{font-size:56px;margin-bottom:20px}
+.empty h2{font-size:26px;font-weight:900;margin-bottom:10px}
+.empty p{font-size:14px;color:var(--muted);max-width:360px;margin:0 auto 28px;line-height:1.65;font-weight:600}
+
+/* ── Campaign strip ── */
+.strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px;margin-bottom:32px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:13px 16px;cursor:pointer;min-width:170px;transition:all .18s;position:relative}
+.chip:hover{border-color:var(--blue);transform:translateY(-1px)}
+.chip.active{border-color:var(--blue);background:#eef3fc;box-shadow:0 4px 16px rgba(26,79,160,.12)}
+.chip.all-chip{min-width:130px;border-style:dashed}
+.chip-date{font-size:10px;color:var(--muted);margin-bottom:4px;font-family:'Fira Code',monospace;font-weight:500}
+.chip-name{font-size:13px;font-weight:800;margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.chip-meta{font-family:'Fira Code',monospace;font-size:10px;color:var(--muted)}
+.chip-del{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;opacity:0;transition:opacity .15s;padding:2px 5px;border-radius:8px}
+.chip:hover .chip-del{opacity:1}
+.chip-del:hover{color:var(--red);background:rgba(214,43,43,.08)}
+
+/* ── KPIs ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin-bottom:24px}
+.kpi{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:18px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.kpi-dot{position:absolute;top:16px;right:16px;width:10px;height:10px;border-radius:50%}
+.kpi-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:9px}
+.kpi-val{font-family:'Fira Code',monospace;font-size:30px;font-weight:500;line-height:1;margin-bottom:5px;color:var(--ink)}
+.kpi-delta{font-family:'Fira Code',monospace;font-size:11px}
+.good{color:var(--green)}.bad{color:var(--red)}.flat{color:var(--muted)}
+
+/* ── Grid ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px}
+
+/* ── Card ── */
+.card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:22px}
+.card-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.cbadge{font-family:'Fira Code',monospace;font-size:10px;background:var(--bg);padding:2px 8px;border-radius:10px;color:var(--muted);font-weight:400}
+.ch{position:relative;height:230px}
+.ch-sm{position:relative;height:185px}
+
+/* ── Section label ── */
+.slbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);display:flex;align-items:center;gap:14px;margin:28px 0 14px}
+.slbl::after{content:'';flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--red) 0,var(--red) 8px,var(--yellow) 8px,var(--yellow) 16px,var(--blue) 16px,var(--blue) 24px,var(--green) 24px,var(--green) 32px,var(--orange) 32px,var(--orange) 40px,transparent 40px,transparent 44px)}
+
+/* ── Dept bars ── */
+.dept-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.dept-row:last-child{border-bottom:none}
+.dept-name{min-width:120px;font-weight:700;color:var(--ink)}
+.barwrap{flex:1;background:var(--border);border-radius:6px;height:6px}
+.barfill{height:100%;border-radius:6px;transition:width .6s ease}
+.dept-pct{min-width:38px;text-align:right;font-family:'Fira Code',monospace;font-size:11px;color:var(--muted)}
+.dept-delta{min-width:50px;text-align:right;font-family:'Fira Code',monospace;font-size:11px}
+.dept-rep{min-width:54px;text-align:right;font-size:11px;color:var(--green);font-family:'Fira Code',monospace}
+
+/* ── Offenders ── */
+.off-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border-radius:12px;margin-bottom:8px;gap:10px;border:2px solid var(--border)}
+.off-name{font-size:13px;font-weight:800;color:var(--ink)}
+.off-dept{font-size:11px;color:var(--muted);margin-top:2px;font-weight:600}
+.off-camps{font-size:10px;color:var(--muted);margin-top:4px;font-weight:600}
+.off-count{font-family:'Fira Code',monospace;font-size:24px;color:var(--red)}
+.off-sub{font-size:10px;color:var(--muted);text-align:right;font-weight:600}
+
+/* ── Legend ── */
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:700}
+.lswatch{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+
+/* ── Manage ── */
+.mgmt-wrap{background:var(--surface);border:2px solid var(--border);border-radius:16px;overflow:hidden}
+.mgmt-toolbar{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:2px solid var(--border);background:var(--stripe)}
+.mgmt-toolbar h2{font-size:17px;font-weight:900;color:var(--ink)}
+.mgmt-toolbar p{font-size:12px;color:var(--muted);margin-top:3px;font-weight:600}
+.mgmt-table{width:100%;border-collapse:collapse}
+.mgmt-table th{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);padding:12px 16px;text-align:left;border-bottom:2px solid var(--border);background:var(--bg);white-space:nowrap}
+.mgmt-table td{padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--ink);vertical-align:middle;font-weight:600}
+.mgmt-table tr:last-child td{border-bottom:none}
+.mgmt-table tbody tr:hover td{background:#faf6ee}
+.mono{font-family:'Fira Code',monospace;font-size:12px;color:var(--muted);font-weight:400}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-family:'Fira Code',monospace;font-weight:500}
+.pill-r{background:rgba(214,43,43,.1);color:var(--red)}
+.pill-g{background:rgba(46,139,58,.1);color:var(--green)}
+.pill-y{background:rgba(245,196,0,.18);color:#8a6f00}
+.pill-b{background:rgba(26,79,160,.1);color:var(--blue)}
+.mgmt-empty{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;font-weight:600}
+
+@media(max-width:900px){.g2,.g3{grid-template-columns:1fr}.main{padding:20px 16px}.hdr{padding:0 16px}.nav{display:none}}
+</style>
+</head>
+<body>
+
+<div class="candy-bar"></div>
+
+<header class="hdr">
+  <div class="hdr-logo">
+    <div class="hdr-mark">PD</div>
+    <div>
+      <div class="hdr-title">Phishing Dashboard</div>
+      <div class="hdr-sub">Campaign Progress Tracker — Demo</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="nav">
+      <button class="nav-tab active" id="tab-dash" onclick="switchTab('dashboard',this)">Dashboard</button>
+      <button class="nav-tab" id="tab-mgmt" onclick="switchTab('manage',this)">Manage Campaigns</button>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="openModal()">+ Upload Campaign</button>
+  </div>
+</header>
+
+<div class="overlay" id="modal">
+  <div class="modal">
+    <h2>Upload Campaign Report</h2>
+    <p class="modal-desc">Upload a CSV export from your phishing simulation platform. All processing is local — no data leaves your browser.</p>
+    <label class="flabel">Campaign Name</label>
+    <input type="text" class="finput" id="camp-name" placeholder="e.g. Q3 2025 — CEO Fraud Simulation">
+    <label class="flabel">CSV File</label>
+    <div class="drop" id="drop-zone">
+      <div class="drop-ico">📂</div>
+      <p><strong onclick="document.getElementById('csv-in').click()">Browse file</strong> or drag and drop here</p>
+      <p class="drop-name" id="drop-name"></p>
+    </div>
+    <input type="file" id="csv-in" accept=".csv" style="display:none">
+    <div class="modal-row">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="uploadCSV()">Upload &amp; Analyze</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="main" id="main"></div>
+
+<script>
+const SEED = [
+  {id:1,name:'Q3 2024 — Invoice Phishing',date:'Aug 12, 2024',
+   total:320,delivered:312,clicked:148,creds:89,compromised:89,reported:34,training_done:180,
+   failure_rate:28.5,report_rate:10.9,click_rate:47.4,cred_rate:28.5,training_rate:56.3,resiliency:42,
+   depts:{IT:[40,11,4],Finance:[55,22,6],HR:[38,14,4],Legal:[28,7,3],Sales:[62,30,7],Marketing:[45,20,4],Operations:[34,8,3]}},
+  {id:2,name:'Q4 2024 — HR Portal Reset',date:'Nov 5, 2024',
+   total:335,delivered:328,clicked:131,creds:72,compromised:72,reported:48,training_done:210,
+   failure_rate:21.9,report_rate:14.6,click_rate:39.9,cred_rate:21.9,training_rate:62.7,resiliency:55,
+   depts:{IT:[42,8,6],Finance:[57,18,9],HR:[40,11,6],Legal:[29,5,4],Sales:[64,22,10],Marketing:[47,15,7],Operations:[36,6,5]}},
+  {id:3,name:'Q1 2025 — Package Delivery',date:'Feb 18, 2025',
+   total:341,delivered:336,clicked:108,creds:54,compromised:54,reported:62,training_done:248,
+   failure_rate:16.1,report_rate:18.5,click_rate:32.1,cred_rate:16.1,training_rate:72.7,resiliency:67,
+   depts:{IT:[43,5,7],Finance:[58,13,11],HR:[41,8,8],Legal:[30,4,5],Sales:[65,15,13],Marketing:[48,10,9],Operations:[36,4,6]}},
+];
+
+const OFFENDERS = [
+  {name:'Marcus Webb',    dept:'Finance',  country:'United States',camps:['Q3 2024 — Invoice Phishing','Q4 2024 — HR Portal Reset','Q1 2025 — Package Delivery']},
+  {name:'Sandra Reyes',   dept:'Sales',    country:'Mexico',       camps:['Q3 2024 — Invoice Phishing','Q4 2024 — HR Portal Reset','Q1 2025 — Package Delivery']},
+  {name:'Tom Hutchinson', dept:'Marketing',country:'Canada',       camps:['Q3 2024 — Invoice Phishing','Q4 2024 — HR Portal Reset']},
+  {name:'Priya Mehta',    dept:'Finance',  country:'United States',camps:['Q4 2024 — HR Portal Reset','Q1 2025 — Package Delivery']},
+  {name:'Carlos Ibarra',  dept:'Sales',    country:'Colombia',     camps:['Q3 2024 — Invoice Phishing','Q1 2025 — Package Delivery']},
+];
+
+// M&M chart colors
+const MM = { red:'#d62b2b', yellow:'#f5c400', blue:'#1a4fa0', green:'#2e8b3a', orange:'#e8671a', brown:'#6b3a2a', light:'#e8c87a' };
+
+let campaigns = [...SEED];
+let active = 'all';
+let tab = 'dashboard';
+let charts = {};
+let parsedCSV = null;
+
+function switchTab(t, el) {
+  tab = t;
+  document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function openModal()  { document.getElementById('modal').classList.add('open'); }
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('camp-name').value = '';
+  document.getElementById('drop-name').textContent = '';
+  parsedCSV = null;
+}
+
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+document.getElementById('csv-in').addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); });
+
+function handleFile(f) {
+  document.getElementById('drop-name').textContent = f.name;
+  Papa.parse(f, { header:true, skipEmptyLines:true, complete: r => { parsedCSV = r.data; } });
+}
+
+function uploadCSV() {
+  const name = document.getElementById('camp-name').value.trim();
+  if(!name)      { toast('Please enter a campaign name', 'err'); return; }
+  if(!parsedCSV) { toast('Please select a CSV file', 'err'); return; }
+
+  const rows = parsedCSV;
+  const total     = rows.length;
+  const delivered = rows.filter(r => r.SuccessfullyDeliveredEmail_TimeStamp && r.SuccessfullyDeliveredEmail_TimeStamp.trim()).length || total;
+  const clicked   = rows.filter(r => r.EmailLinkClicked_TimeStamp && r.EmailLinkClicked_TimeStamp.trim()).length;
+  const creds     = rows.filter(r => r['CredSupplied_TimeStamp(Compromised)'] && r['CredSupplied_TimeStamp(Compromised)'].trim()).length;
+  const comp      = rows.filter(r => String(r.Compromised).toLowerCase() === 'true').length;
+  const reported  = rows.filter(r => r['Phishing Reported On'] && r['Phishing Reported On'].trim()).length;
+  const trainDone = rows.filter(r => (r['Training Status']||'').toLowerCase().includes('complet')).length;
+  const del       = delivered || 1;
+
+  const dm = {};
+  rows.forEach(r => {
+    const d = r.Department || 'Unknown';
+    if(!dm[d]) dm[d] = [0,0,0];
+    dm[d][0]++;
+    if(String(r.Compromised).toLowerCase() === 'true') dm[d][1]++;
+    if(r['Phishing Reported On'] && r['Phishing Reported On'].trim()) dm[d][2]++;
+  });
+
+  campaigns.push({
+    id: Date.now(), name,
+    date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+    total, delivered, clicked, creds, compromised:comp, reported, training_done:trainDone,
+    failure_rate:  parseFloat((comp/del*100).toFixed(1)),
+    report_rate:   parseFloat((reported/del*100).toFixed(1)),
+    click_rate:    parseFloat((clicked/del*100).toFixed(1)),
+    cred_rate:     parseFloat((creds/del*100).toFixed(1)),
+    training_rate: parseFloat((trainDone/total*100).toFixed(1)),
+    resiliency:    Math.round(((reported+(delivered-clicked))/del)*100),
+    depts: dm,
+  });
+
+  closeModal();
+  active = 'all';
+  tab = 'dashboard';
+  document.getElementById('tab-dash').classList.add('active');
+  document.getElementById('tab-mgmt').classList.remove('active');
+  toast('Campaign added successfully', 'ok');
+  render();
+}
+
+function handleChipDelete(btn, e) {
+  e.stopPropagation();
+  doDelete(parseInt(btn.getAttribute('data-cid')));
+}
+
+function doDelete(id) {
+  const c = campaigns.find(x => x.id === id);
+  if(!c) return;
+  if(!confirm('Delete "' + c.name + '"?\nThis cannot be undone.')) return;
+  campaigns = campaigns.filter(x => x.id !== id);
+  if(active == id) active = 'all';
+  toast('Campaign deleted', 'ok');
+  render();
+}
+
+function viewCampaign(id) {
+  active = id;
+  tab = 'dashboard';
+  document.getElementById('tab-dash').classList.add('active');
+  document.getElementById('tab-mgmt').classList.remove('active');
+  render();
+}
+
+function render() {
+  destroyCharts();
+  if(tab === 'manage') { renderManage(); return; }
+
+  const data   = active === 'all' ? campaigns : campaigns.filter(c => c.id == active);
+  const latest = data[data.length - 1];
+  const prev   = data.length > 1 ? data[data.length - 2] : null;
+
+  document.getElementById('main').innerHTML = campaigns.length === 0 ? emptyHtml() : dashHtml(latest, prev, data);
+  if(!campaigns.length) return;
+  buildTrends(data);
+  buildFunnel(latest);
+  buildStatus(latest);
+  buildDeptChart(data);
+  renderDepts(latest, prev);
+  renderOffenders();
+}
+
+function renderManage() {
+  const el = document.getElementById('main');
+  if(!campaigns.length) {
+    el.innerHTML = '<div class="mgmt-empty"><div style="font-size:44px;margin-bottom:16px">&#128230;</div>'
+      + '<p>No campaigns uploaded yet.</p>'
+      + '<button class="btn btn-primary" style="margin-top:16px" onclick="openModal()">+ Upload First Campaign</button></div>';
+    return;
+  }
+
+  const rows = campaigns.map((c, i) => {
+    const prev = i > 0 ? campaigns[i-1] : null;
+    const diff = prev ? (c.failure_rate - prev.failure_rate).toFixed(1) : null;
+    const trendHtml = diff === null
+      ? '<span class="mono">&#8212; first</span>'
+      : diff < 0
+        ? '<span class="good" style="font-family:\'Fira Code\',monospace;font-size:11px">&#8595; ' + Math.abs(diff) + '%</span>'
+        : diff > 0
+          ? '<span class="bad" style="font-family:\'Fira Code\',monospace;font-size:11px">&#8593; ' + diff + '%</span>'
+          : '<span class="flat" style="font-family:\'Fira Code\',monospace;font-size:11px">&#8594; 0%</span>';
+
+    const resPill = c.resiliency >= 70
+      ? '<span class="pill pill-g">' + c.resiliency + '%</span>'
+      : c.resiliency >= 40
+        ? '<span class="pill pill-y">' + c.resiliency + '%</span>'
+        : '<span class="pill pill-r">' + c.resiliency + '%</span>';
+
+    return '<tr>'
+      + '<td><div style="font-weight:800">' + c.name + '</div><div class="mono" style="margin-top:3px">' + c.date + '</div></td>'
+      + '<td class="mono">' + c.total.toLocaleString() + '</td>'
+      + '<td class="mono">' + c.delivered.toLocaleString() + '</td>'
+      + '<td><span class="pill pill-r">' + c.failure_rate + '%</span></td>'
+      + '<td><span class="pill pill-g">' + c.report_rate + '%</span></td>'
+      + '<td class="mono">' + c.click_rate + '%</td>'
+      + '<td>' + resPill + '</td>'
+      + '<td>' + trendHtml + '</td>'
+      + '<td class="mono">' + c.training_rate + '%</td>'
+      + '<td><div style="display:flex;gap:8px">'
+      + '<button class="btn btn-ghost btn-sm" onclick="viewCampaign(' + c.id + ')">View</button>'
+      + '<button class="btn-del" onclick="doDelete(' + c.id + ')">Delete</button>'
+      + '</div></td></tr>';
+  }).join('');
+
+  el.innerHTML = '<div class="mgmt-wrap">'
+    + '<div class="mgmt-toolbar"><div><h2>Manage Campaigns</h2>'
+    + '<p>' + campaigns.length + ' campaign' + (campaigns.length !== 1 ? 's' : '') + ' on record</p></div>'
+    + '<button class="btn btn-primary btn-sm" onclick="openModal()">+ Upload Campaign</button></div>'
+    + '<div style="overflow-x:auto"><table class="mgmt-table"><thead><tr>'
+    + '<th>Campaign</th><th>Recipients</th><th>Delivered</th>'
+    + '<th>Failure Rate</th><th>Report Rate</th><th>Click Rate</th>'
+    + '<th>Resiliency</th><th>vs Previous</th><th>Training</th><th>Actions</th>'
+    + '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+}
+
+function emptyHtml() {
+  return '<div class="empty"><div class="empty-ico">&#127881;</div>'
+    + '<h2>No campaigns yet</h2>'
+    + '<p>Upload your first phishing simulation CSV to start tracking progress across campaigns.</p>'
+    + '<button class="btn btn-primary" onclick="openModal()">+ Upload Campaign</button></div>';
+}
+
+function dashHtml(latest, prev, data) {
+  return stripHtml() + kpiHtml(latest, prev)
+    + '<div class="slbl">Trend analysis</div>'
+    + '<div class="g2">'
+    + '<div class="card"><div class="card-title">Failure &amp; report rate <span class="cbadge">per campaign</span></div>'
+    + '<div class="legend"><span><span class="lswatch" style="background:' + MM.red + '"></span>Failure rate %</span><span><span class="lswatch" style="background:' + MM.green + '"></span>Report rate %</span></div>'
+    + '<div class="ch"><canvas id="trendC" role="img" aria-label="Failure and report rate trends"></canvas></div></div>'
+    + '<div class="card"><div class="card-title">Resiliency score <span class="cbadge">per campaign</span></div>'
+    + '<div class="legend"><span><span class="lswatch" style="background:' + MM.blue + '"></span>Resiliency %</span></div>'
+    + '<div class="ch"><canvas id="resC" role="img" aria-label="Resiliency score trend"></canvas></div></div>'
+    + '</div>'
+    + '<div class="g3">'
+    + '<div class="card"><div class="card-title">Click &amp; cred rate <span class="cbadge">per campaign</span></div>'
+    + '<div class="legend"><span><span class="lswatch" style="background:' + MM.yellow + '"></span>Click %</span><span><span class="lswatch" style="background:' + MM.orange + '"></span>Cred %</span></div>'
+    + '<div class="ch-sm"><canvas id="clickC" role="img" aria-label="Click and cred rates"></canvas></div></div>'
+    + '<div class="card"><div class="card-title">Training completion <span class="cbadge">per campaign</span></div>'
+    + '<div class="legend"><span><span class="lswatch" style="background:' + MM.green + '"></span>Completion %</span></div>'
+    + '<div class="ch-sm"><canvas id="trainC" role="img" aria-label="Training completion"></canvas></div></div>'
+    + '<div class="card"><div class="card-title">Engagement funnel <span class="cbadge">latest</span></div>'
+    + '<div class="ch-sm"><canvas id="funnelC" role="img" aria-label="Engagement funnel"></canvas></div></div>'
+    + '</div>'
+    + '<div class="slbl">Department intelligence</div>'
+    + '<div class="card" style="margin-bottom:18px"><div class="card-title">Failure rate by department <span class="cbadge">all campaigns</span></div>'
+    + '<div class="ch" style="height:260px"><canvas id="deptC" role="img" aria-label="Dept failure rates"></canvas></div></div>'
+    + '<div class="card" style="margin-bottom:18px"><div class="card-title">Department breakdown <span class="cbadge">latest &middot; failure &middot; delta &middot; report</span></div>'
+    + '<div id="dept-rows"></div></div>'
+    + '<div class="slbl">Repeat offenders</div>'
+    + '<div class="g2">'
+    + '<div class="card"><div class="card-title">Compromised in multiple campaigns <span class="cbadge">all time</span></div><div id="off-list"></div></div>'
+    + '<div class="card"><div class="card-title">User status breakdown <span class="cbadge">latest</span></div>'
+    + '<div class="legend" id="status-leg"></div>'
+    + '<div class="ch"><canvas id="statusC" role="img" aria-label="User status doughnut"></canvas></div></div>'
+    + '</div>';
+}
+
+function stripHtml() {
+  const all = '<div class="chip all-chip ' + (active==='all'?'active':'') + '" onclick="setActive(\'all\')">'
+    + '<div class="chip-date">Overview</div><div class="chip-name">All campaigns</div>'
+    + '<div class="chip-meta">' + campaigns.length + ' total</div></div>';
+  const chips = campaigns.map(c =>
+    '<div class="chip ' + (active==c.id?'active':'') + '" onclick="setActive(' + c.id + ')">'
+    + '<button class="chip-del" data-cid="' + c.id + '" onclick="handleChipDelete(this,event)">&#x2715;</button>'
+    + '<div class="chip-date">' + c.date + '</div>'
+    + '<div class="chip-name">' + c.name + '</div>'
+    + '<div class="chip-meta">' + c.total + ' users &middot; ' + c.failure_rate + '% fail</div></div>'
+  ).join('');
+  return '<div class="strip">' + all + chips + '</div>';
+}
+
+function setActive(v) { active = v; render(); }
+
+function kpiHtml(c, prev) {
+  const d = (curr, pv, dir) => {
+    if(!prev) return '<span class="flat">&#8212; first</span>';
+    const diff = (curr - pv).toFixed(1);
+    const better = dir === 'down' ? diff < 0 : diff > 0;
+    const cls = diff == 0 ? 'flat' : better ? 'good' : 'bad';
+    const arr = diff > 0 ? '&#8593;' : diff < 0 ? '&#8595;' : '&#8594;';
+    return '<span class="' + cls + '">' + arr + ' ' + Math.abs(diff) + '% vs prev</span>';
+  };
+  const dotColor = [MM.red, MM.green, MM.yellow, MM.orange, MM.blue, MM.green, MM.red, MM.green];
+  const items = [
+    {label:'Failure rate',   val:c.failure_rate+'%', delta:d(c.failure_rate, prev?.failure_rate,'down')},
+    {label:'Report rate',    val:c.report_rate+'%',  delta:d(c.report_rate,  prev?.report_rate, 'up')},
+    {label:'Click rate',     val:c.click_rate+'%',   delta:d(c.click_rate,   prev?.click_rate,  'down')},
+    {label:'Creds supplied', val:c.cred_rate+'%',    delta:d(c.cred_rate,    prev?.cred_rate,   'down')},
+    {label:'Resiliency',     val:c.resiliency+'%',   delta:d(c.resiliency,   prev?.resiliency,  'up')},
+    {label:'Training done',  val:c.training_rate+'%',delta:d(c.training_rate,prev?.training_rate,'up')},
+    {label:'Compromised',    val:c.compromised,      delta:d(c.compromised,  prev?.compromised, 'down')},
+    {label:'Reported',       val:c.reported,         delta:d(c.reported,     prev?.reported,    'up')},
+  ];
+  return '<div class="kpi-row">' + items.map((k,i) =>
+    '<div class="kpi">'
+    + '<div class="kpi-dot" style="background:' + dotColor[i] + '"></div>'
+    + '<div class="kpi-label">' + k.label + '</div>'
+    + '<div class="kpi-val">' + k.val + '</div>'
+    + '<div class="kpi-delta">' + k.delta + '</div>'
+    + '</div>'
+  ).join('') + '</div>';
+}
+
+function destroyCharts() { Object.values(charts).forEach(c => { try { c.destroy(); } catch {} }); charts = {}; }
+
+function mk(id, cfg) {
+  const el = document.getElementById(id); if(!el) return;
+  if(charts[id]) { try { charts[id].destroy(); } catch {} }
+  charts[id] = new Chart(el.getContext('2d'), cfg);
+}
+
+const TICK = { color:'#7a7068', font:{size:10} };
+const GRID = { color:'rgba(0,0,0,0.06)' };
+
+const lds = (label, data, color, fill) => ({
+  label, data, borderColor: color,
+  backgroundColor: fill ? color + '22' : 'transparent',
+  pointBackgroundColor: color, pointRadius: 5, pointHoverRadius: 7,
+  tension: .35, fill: !!fill, borderWidth: 2.5,
+});
+
+const lopts = (mn, mx) => ({
+  responsive:true, maintainAspectRatio:false,
+  plugins:{ legend:{ display:false } },
+  scales:{
+    x:{ ticks:{ ...TICK, maxRotation:30 }, grid:GRID },
+    y:{ min:mn, max:mx, ticks:{ ...TICK, callback:v=>v+'%' }, grid:GRID },
+  }
+});
+
+function buildTrends(data) {
+  const lbl = data.map(c => c.name.length > 18 ? c.name.slice(0,16) + '…' : c.name);
+  mk('trendC', { type:'line', data:{ labels:lbl, datasets:[
+    lds('Failure %', data.map(c=>c.failure_rate), MM.red,   true),
+    lds('Report %',  data.map(c=>c.report_rate),  MM.green, true),
+  ]}, options:lopts(0) });
+  mk('resC', { type:'line', data:{ labels:lbl, datasets:[
+    lds('Resiliency', data.map(c=>c.resiliency), MM.blue, true),
+  ]}, options:lopts(0,100) });
+  mk('clickC', { type:'line', data:{ labels:lbl, datasets:[
+    lds('Click %', data.map(c=>c.click_rate), MM.yellow),
+    lds('Cred %',  data.map(c=>c.cred_rate),  MM.orange),
+  ]}, options:lopts(0) });
+  mk('trainC', { type:'line', data:{ labels:lbl, datasets:[
+    lds('Completion', data.map(c=>c.training_rate), MM.green, true),
+  ]}, options:lopts(0,100) });
+}
+
+function buildFunnel(c) {
+  mk('funnelC', { type:'bar', data:{
+    labels:['Delivered','Clicked','Creds','Compromised','Reported'],
+    datasets:[{ data:[c.delivered,c.clicked,c.creds,c.compromised,c.reported],
+      backgroundColor:[MM.blue, MM.yellow, MM.orange, MM.red, MM.green],
+      borderRadius:6, borderSkipped:false }]
+  }, options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false } },
+    scales:{ x:{ ticks:TICK, grid:GRID }, y:{ ticks:TICK, grid:GRID } }
+  }});
+}
+
+function buildStatus(c) {
+  const co  = Math.max(0, c.clicked - c.creds);
+  const na  = Math.max(0, c.total - c.clicked - c.reported);
+  const vals = [c.compromised, co, c.reported, na];
+  const lbls = ['Compromised','Clicked only','Reported','No action'];
+  const clrs = [MM.red, MM.yellow, MM.green, '#e8e3da'];
+  const leg = document.getElementById('status-leg');
+  if(leg) leg.innerHTML = lbls.map((l,i) =>
+    '<span><span class="lswatch" style="background:' + clrs[i] + '"></span>' + l + ' ' + vals[i] + '</span>'
+  ).join('');
+  mk('statusC', { type:'doughnut', data:{ labels:lbls, datasets:[{
+    data:vals, backgroundColor:clrs, borderWidth:3, hoverOffset:7, borderColor:'#ffffff'
+  }]}, options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+    plugins:{ legend:{ display:false } }
+  }});
+}
+
+function buildDeptChart(allData) {
+  const depts  = Object.keys(allData[0].depts);
+  const colors = [MM.red, MM.blue, MM.green, MM.yellow, MM.orange, MM.brown, '#9b59b6'];
+  const lbl    = allData.map(c => c.name.length > 16 ? c.name.slice(0,14) + '…' : c.name);
+  mk('deptC', { type:'line', data:{ labels:lbl, datasets: depts.map((dept,i) => ({
+    label: dept,
+    data: allData.map(c => { const v = c.depts[dept]; return v ? parseFloat((v[1]/v[0]*100).toFixed(1)) : null; }),
+    borderColor: colors[i % colors.length],
+    backgroundColor: 'transparent',
+    pointRadius: 5, tension:.3, borderWidth: 2, spanGaps: true,
+  }))}, options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ position:'right', labels:{ color:'#7a7068', boxWidth:10, font:{size:10}, padding:10 } } },
+    scales:{ x:{ ticks:TICK, grid:GRID }, y:{ ticks:{ ...TICK, callback:v=>v+'%' }, grid:GRID } }
+  }});
+}
+
+function renderDepts(latest, prev) {
+  const el = document.getElementById('dept-rows'); if(!el) return;
+  el.innerHTML = Object.entries(latest.depts)
+    .sort((a,b) => (b[1][1]/b[1][0]) - (a[1][1]/a[1][0]))
+    .map(([name,[total,comp,rep]]) => {
+      const rate    = parseFloat((comp/total*100).toFixed(1));
+      const repRate = parseFloat((rep/total*100).toFixed(1));
+      const bc = rate >= 20 ? MM.red : rate >= 12 ? MM.yellow : MM.green;
+      let dh = '<span style="color:var(--muted)">&#8212;</span>';
+      if(prev && prev.depts[name]) {
+        const [pt,pc] = prev.depts[name];
+        const diff = (rate - parseFloat((pc/pt*100).toFixed(1))).toFixed(1);
+        dh = diff < 0
+          ? '<span class="good">&#8595; ' + Math.abs(diff) + '%</span>'
+          : diff > 0
+            ? '<span class="bad">&#8593; ' + diff + '%</span>'
+            : '<span class="flat">&#8594; 0%</span>';
+      }
+      return '<div class="dept-row">'
+        + '<span class="dept-name">' + name + '</span>'
+        + '<div class="barwrap"><div class="barfill" style="width:' + Math.min(rate,100) + '%;background:' + bc + '"></div></div>'
+        + '<span class="dept-pct">' + rate + '%</span>'
+        + '<span class="dept-delta">' + dh + '</span>'
+        + '<span class="dept-rep">' + repRate + '% rep</span></div>';
+    }).join('');
+}
+
+function renderOffenders() {
+  const el = document.getElementById('off-list'); if(!el) return;
+  const campNames = new Set(campaigns.map(c => c.name));
+  const relevant  = OFFENDERS
+    .map(o => ({ ...o, camps: o.camps.filter(c => campNames.has(c)) }))
+    .filter(o => o.camps.length >= 2);
+  if(!relevant.length) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--muted);padding:14px 0;font-weight:600">No repeat offenders yet &#8212; upload more campaigns to track recidivism.</p>';
+    return;
+  }
+  el.innerHTML = relevant.map(o =>
+    '<div class="off-row"><div>'
+    + '<div class="off-name">' + o.name + '</div>'
+    + '<div class="off-dept">' + o.dept + ' &middot; ' + o.country + '</div>'
+    + '<div class="off-camps">' + o.camps.slice(0,2).join(' &middot; ') + (o.camps.length > 2 ? ' + ' + (o.camps.length-2) + ' more' : '') + '</div>'
+    + '</div><div style="text-align:right">'
+    + '<div class="off-count">' + o.camps.length + '</div>'
+    + '<div class="off-sub">campaigns</div></div></div>'
+  ).join('');
+}
+
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'ok' ? '\u2713 ' : '\u2715 ') + msg;
+  t.className = 'toast ' + (type||'ok') + ' show';
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+render();
+</script>
+</body>
+</html>
