@@ -191,7 +191,7 @@ The **candy-stripe top bar** cycles through all palette colors as a signature vi
 
 ---
 
-## 🧪 Demo Data
+## Demo Data
 
 The dashboard ships with 3 seeded campaigns so it renders immediately without uploading a file:
 
