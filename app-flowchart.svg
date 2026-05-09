@@ -1,0 +1,63 @@
+<svg width="100%" viewBox="0 0 680 920" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Phishing Dashboard – how the app works</title>
+  <desc>Flowchart showing the full flow of the Phishing Dashboard app</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      text { font-family: system-ui, sans-serif; fill: #1a1a2e; }
+      .th  { font-size: 14px; font-weight: 500; }
+      .ts  { font-size: 12px; font-weight: 400; fill: #5f5e5a; }
+      .arr { stroke: #888; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+      .c-gray   { fill: #f1efe8; stroke: #b4b2a9; }
+      .c-teal   { fill: #e1f5ee; stroke: #1d9e75; }
+      .c-blue   { fill: #e6f1fb; stroke: #378add; }
+      .c-amber  { fill: #faeeda; stroke: #ba7517; }
+      .c-purple { fill: #eeedfe; stroke: #534ab7; }
+      .c-coral  { fill: #faece7; stroke: #d85a30; }
+      .c-red    { fill: #fcebeb; stroke: #e24b4a; }
+      rect { rx: 8; }
+    </style>
+  </defs>
+
+  <g class="c-gray"><rect x="260" y="30" width="160" height="44" rx="22" stroke-width="0.5"/><text class="th" x="340" y="52" text-anchor="middle" dominant-baseline="central">Page loads</text></g>
+  <line x1="340" y1="74" x2="340" y2="108" class="arr"/>
+  <g class="c-teal"><rect x="220" y="108" width="240" height="56" rx="8" stroke-width="0.5"/><text class="th" x="340" y="128" text-anchor="middle" dominant-baseline="central">Load 3 demo campaigns</text><text class="ts" x="340" y="148" text-anchor="middle" dominant-baseline="central">Seeded in JS (SEED[])</text></g>
+  <line x1="340" y1="164" x2="340" y2="198" class="arr"/>
+  <g class="c-blue"><rect x="220" y="198" width="240" height="56" rx="8" stroke-width="0.5"/><text class="th" x="340" y="218" text-anchor="middle" dominant-baseline="central">render()</text><text class="ts" x="340" y="238" text-anchor="middle" dominant-baseline="central">Main dispatcher</text></g>
+  <line x1="340" y1="254" x2="340" y2="288" class="arr"/>
+  <g class="c-amber"><rect x="220" y="288" width="240" height="44" rx="8" stroke-width="0.5"/><text class="th" x="340" y="310" text-anchor="middle" dominant-baseline="central">Which tab is active?</text></g>
+  <path d="M220 310 L100 310 L100 388" fill="none" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="ts" x="156" y="304" text-anchor="middle">Dashboard</text>
+  <path d="M460 310 L580 310 L580 388" fill="none" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="ts" x="522" y="304" text-anchor="middle">Manage</text>
+  <g class="c-blue"><rect x="30" y="388" width="140" height="56" rx="8" stroke-width="0.5"/><text class="th" x="100" y="408" text-anchor="middle" dominant-baseline="central">dashHtml()</text><text class="ts" x="100" y="428" text-anchor="middle" dominant-baseline="central">Build HTML layout</text></g>
+  <line x1="100" y1="444" x2="100" y2="478" class="arr"/>
+  <g class="c-purple"><rect x="30" y="478" width="140" height="56" rx="8" stroke-width="0.5"/><text class="th" x="100" y="498" text-anchor="middle" dominant-baseline="central">Build charts</text><text class="ts" x="100" y="518" text-anchor="middle" dominant-baseline="central">7 Chart.js calls</text></g>
+  <line x1="100" y1="534" x2="100" y2="568" class="arr"/>
+  <g class="c-purple"><rect x="30" y="568" width="140" height="56" rx="8" stroke-width="0.5"/><text class="th" x="100" y="588" text-anchor="middle" dominant-baseline="central">Dept rows</text><text class="ts" x="100" y="608" text-anchor="middle" dominant-baseline="central">renderDepts()</text></g>
+  <line x1="100" y1="624" x2="100" y2="658" class="arr"/>
+  <g class="c-purple"><rect x="30" y="658" width="140" height="56" rx="8" stroke-width="0.5"/><text class="th" x="100" y="678" text-anchor="middle" dominant-baseline="central">Offenders</text><text class="ts" x="100" y="698" text-anchor="middle" dominant-baseline="central">renderOffenders()</text></g>
+  <g class="c-blue"><rect x="510" y="388" width="140" height="56" rx="8" stroke-width="0.5"/><text class="th" x="580" y="408" text-anchor="middle" dominant-baseline="central">renderManage()</text><text class="ts" x="580" y="428" text-anchor="middle" dominant-baseline="central">Campaign table</text></g>
+  <line x1="580" y1="444" x2="580" y2="478" class="arr"/>
+  <g class="c-coral"><rect x="510" y="478" width="140" height="44" rx="8" stroke-width="0.5"/><text class="th" x="580" y="500" text-anchor="middle" dominant-baseline="central">View / Delete</text></g>
+  <path d="M510 496 L440 496 L440 595 L460 595" fill="none" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="ts" x="426" y="492" text-anchor="middle">View</text>
+  <line x1="580" y1="522" x2="580" y2="556" class="arr"/>
+  <g class="c-red"><rect x="510" y="556" width="140" height="56" rx="8" stroke-width="0.5"/><text class="th" x="580" y="576" text-anchor="middle" dominant-baseline="central">Remove campaign</text><text class="ts" x="580" y="596" text-anchor="middle" dominant-baseline="central">from state array</text></g>
+  <path d="M580 612 L580 640 L460 640" fill="none" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g class="c-teal"><rect x="220" y="580" width="240" height="56" rx="8" stroke-width="0.5"/><text class="th" x="340" y="600" text-anchor="middle" dominant-baseline="central">Campaign state</text><text class="ts" x="340" y="620" text-anchor="middle" dominant-baseline="central">JS array in memory</text></g>
+  <path d="M220 608 L180 608 L180 225 L220 225" fill="none" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="ts" x="136" y="604" text-anchor="middle">switch</text>
+  <text class="ts" x="136" y="618" text-anchor="middle">campaign</text>
+  <line x1="340" y1="636" x2="340" y2="680" class="arr"/>
+  <g class="c-gray"><rect x="220" y="680" width="240" height="44" rx="8" stroke-width="0.5"/><text class="th" x="340" y="702" text-anchor="middle" dominant-baseline="central">User clicks upload</text></g>
+  <line x1="340" y1="724" x2="340" y2="758" class="arr"/>
+  <g class="c-gray"><rect x="220" y="758" width="240" height="56" rx="8" stroke-width="0.5"/><text class="th" x="340" y="778" text-anchor="middle" dominant-baseline="central">Modal: name + CSV</text><text class="ts" x="340" y="798" text-anchor="middle" dominant-baseline="central">Drag/drop or browse</text></g>
+  <line x1="340" y1="814" x2="340" y2="848" class="arr"/>
+  <g class="c-purple"><rect x="220" y="848" width="240" height="56" rx="8" stroke-width="0.5"/><text class="th" x="340" y="868" text-anchor="middle" dominant-baseline="central">PapaParse (local)</text><text class="ts" x="340" y="888" text-anchor="middle" dominant-baseline="central">No data leaves browser</text></g>
+  <path d="M460 876 L508 876 L508 640 L460 640" fill="none" stroke="#888" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="ts" x="560" y="762" text-anchor="middle">push to</text>
+  <text class="ts" x="560" y="776" text-anchor="middle">state array</text>
+</svg>
