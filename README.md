@@ -1,10 +1,10 @@
-# 🎯 Phishing Dashboard - Campaign Progress Tracker
+# Phishing Dashboard - Campaign Progress Tracker
 
 > A **browser-based, zero-backend phishing simulation analytics dashboard** built for security awareness teams. Upload CSV exports from any phishing simulation platform, track trends across campaigns, and generate actionable insights - all processed locally with no data ever leaving the browser.
 
 ---
 
-## 📸 Overview
+## Overview
 
 The Phishing Dashboard gives security awareness teams a clean, branded analytics hub to track phishing simulation performance over time. It features a bold candy-stripe color palette and a fully responsive single-file architecture.
 
@@ -18,7 +18,7 @@ The Phishing Dashboard gives security awareness teams a clean, branded analytics
 
 ---
 
-## 🗺️ How It Works
+## How It Works
 
 The diagram below shows the complete flow of the application - from page load through user interactions, CSV upload, and re-rendering.
 
@@ -36,7 +36,7 @@ The diagram below shows the complete flow of the application - from page load th
 
 ---
 
-## 📊 Metrics Tracked
+## Metrics Tracked
 
 The dashboard computes and visualizes the following metrics per campaign:
 
@@ -55,7 +55,7 @@ All metrics display a **delta badge** comparing the current campaign to the prev
 
 ---
 
-## 🎨 UI Components
+## UI Components
 
 ### Dashboard Tab
 - **Campaign Strip** - scrollable horizontal chips, one per campaign plus an "All" aggregate view
@@ -77,7 +77,7 @@ All metrics display a **delta badge** comparing the current campaign to the prev
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Option 1 - Open directly in browser
 
@@ -118,7 +118,7 @@ netlify deploy --prod --dir .
 
 ---
 
-## 📁 CSV Format
+## CSV Format
 
 The dashboard auto-detects columns from your phishing platform's CSV export. The following column names are expected (GoPhish / KnowBe4 style):
 
@@ -144,7 +144,7 @@ Training Status,Country
 
 ---
 
-## 🔐 Privacy & Data Handling
+## Privacy & Data Handling
 
 | Concern | How it's handled |
 |---------|-----------------|
@@ -156,7 +156,7 @@ Training Status,Country
 
 ---
 
-## 🧱 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -170,7 +170,7 @@ Training Status,Country
 
 ---
 
-## 🎨 Design System
+## Design System
 
 The dashboard uses a bold candy-stripe palette built from CSS custom properties:
 
@@ -205,7 +205,7 @@ The demo data shows a clear downward trend in failure rate and upward trend in r
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 phishing-dashboard/
@@ -227,20 +227,20 @@ phishing-dashboard/
 
 ---
 
-## 👤 Author
+## Author
 
 **Gerardo Hernandez**
 Security Analyst | Adjunct Professor | Doctoral Candidate in Engineering (AI/ML)
 
 ---
 
-## 📄 License
+## License
 
 MIT License - feel free to fork and adapt for your own security awareness program.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [Chart.js](https://www.chartjs.org/) - open-source chart library
 - [PapaParse](https://www.papaparse.com/) - browser CSV parser
